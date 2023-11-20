@@ -44,7 +44,7 @@ types-checking = [
     "mypy",
 ]
 dev = [
-    "dating-backend[lint, types-checking]"
+    "dating-backend[test, lint, types-checking]"
 ]
 
 [project.urls]
