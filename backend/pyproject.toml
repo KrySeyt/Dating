@@ -29,7 +29,11 @@ description = "Vstrechal`nik backend"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi",
-    "passlib"
+    "passlib[argon2]",
+    "types-passlib",
+#    "sqlalchemy",
+#    "psycopg2-binary",
+#    "redis",
 ]
 
 [project.optional-dependencies]
