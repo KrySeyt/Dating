@@ -16,7 +16,7 @@ def get_session_id(request: Request) -> str:
     if not auth_cookie:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            detail="Unauthorized",
         )
 
     _, session_id = auth_cookie.split()
