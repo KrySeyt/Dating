@@ -6,9 +6,15 @@ from typing import Generator, Callable, Iterable
 
 from .schema import Chat
 from .crud import RAMChatCrud
+from ..users.service import UserService, UserServiceFactory
+from ..users.exceptions import UserNotFound
 
 
 class ChatServiceImp(ABC):
+    @abstractmethod
+    def get_by_id(self, chat_id: int) -> Chat | None:
+        raise NotImplementedError
+
     @abstractmethod
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         raise NotImplementedError
@@ -17,6 +23,9 @@ class ChatServiceImp(ABC):
 class RAMChatServiceImp(ChatServiceImp):
     def __init__(self, crud: RAMChatCrud) -> None:
         self.db = crud
+
+    def get_by_id(self, chat_id: int) -> Chat | None:
+        return self.db.get_by_id(chat_id)
 
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         return self.db.create_chat(users_ids)
@@ -29,10 +38,18 @@ class RAMChatServiceImp(ChatServiceImp):
 
 
 class ChatService:
-    def __init__(self, implementation: ChatServiceImp) -> None:
+    def __init__(self, implementation: ChatServiceImp, user_service: UserService) -> None:
         self.imp = implementation
+        self.user_service = user_service
+
+    def get_by_id(self, chat_id: int) -> Chat | None:
+        return self.imp.get_by_id(chat_id)
 
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
+        for user_id in users_ids:
+            if not self.user_service.get_user_by_id(user_id):
+                raise UserNotFound(f"User with id {user_id} doesn't exists")
+
         return self.imp.create_chat(users_ids)
 
 
@@ -43,13 +60,15 @@ class ChatServiceFactory(ABC):
 
 
 class RAMChatServiceFactory(ChatServiceFactory):
-    def __init__(self, crud_factory: Callable[[], RAMChatCrud]) -> None:
+    def __init__(self, crud_factory: Callable[[], RAMChatCrud], user_service_factory: UserServiceFactory) -> None:
         self.crud_factory = crud_factory
+        self.user_service_factory = user_service_factory
 
     def create_chat_service(self) -> Generator[ChatService, None, None]:
         crud = self.crud_factory()
         imp = RAMChatServiceImp(crud)
-        yield ChatService(imp)
+        user_service = self.user_service_factory.create_user_service()
+        yield ChatService(imp, next(user_service))
 
 
 # class RDBMSUserServiceFactory(UserServiceFactory):
