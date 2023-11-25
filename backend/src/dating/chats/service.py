@@ -16,6 +16,10 @@ class ChatServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_user_chats(self, user_id: int) -> list[Chat]:
+        raise NotImplementedError
+
+    @abstractmethod
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         raise NotImplementedError
 
@@ -34,6 +38,9 @@ class RAMChatServiceImp(ChatServiceImp):
 
     def get_by_id(self, chat_id: int) -> Chat | None:
         return self.db.get_by_id(chat_id)
+
+    def get_user_chats(self, user_id: int) -> list[Chat]:
+        return self.db.get_user_chats(user_id)
 
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         return self.db.create_chat(users_ids)
@@ -59,12 +66,29 @@ class ChatService:
     def get_by_id(self, chat_id: int) -> Chat | None:
         return self.imp.get_by_id(chat_id)
 
+    def get_user_chats(self, user_id: int) -> list[Chat]:
+        return self.imp.get_user_chats(user_id)
+
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         for user_id in users_ids:
             if not self.user_service.get_user_by_id(user_id):
                 raise UserNotFound(f"User with id {user_id} doesn't exists")
 
         return self.imp.create_chat(users_ids)
+
+    def create_chat_with_matched_user(self, user_id: int) -> Chat | None:
+        user_chats = self.get_user_chats(user_id)
+        except_users: set[int] = set()
+        for chat in user_chats:
+            for id_ in chat.users_ids:
+                except_users.add(id_)
+
+        second_user = self.user_service.get_random_user(except_=except_users)
+
+        if not second_user:
+            return None
+
+        return self.create_chat((user_id, second_user.id))
 
     def delete_chat(self, chat_id: int) -> Chat | None:
         return self.imp.delete_chat(chat_id)

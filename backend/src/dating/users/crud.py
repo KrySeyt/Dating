@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import asdict
+from typing import Container
 
 # from sqlalchemy import select
 # from sqlalchemy.orm import Session
@@ -43,6 +44,13 @@ class RAMUserCrud:
         for user in USERS_DB:
             if user.username == username:
                 return user
+        return None
+
+    def get_random_user(self, except_: Container[int]) -> schema.User | None:
+        for user in USERS_DB:
+            if user.id not in except_:
+                return user
+
         return None
 
     def create_user(self, user_in: schema.UserIn) -> schema.User:

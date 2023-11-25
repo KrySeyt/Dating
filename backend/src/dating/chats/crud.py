@@ -14,6 +14,13 @@ class RAMChatCrud:
 
         return None
 
+    def get_user_chats(self, user_id: int) -> list[Chat]:
+        chats: list[Chat] = []
+        for chat in CHATS_DB:
+            if user_id in chat.users_ids:
+                chats.append(chat)
+        return chats
+
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         chat_id = max(CHATS_DB, key=lambda x: x.id).id + 1 if CHATS_DB else 1
         chat = Chat(id=chat_id, users_ids=list(users_ids))

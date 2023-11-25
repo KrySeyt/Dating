@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generator, Callable
+from typing import Generator, Callable, Container
 
 # from sqlalchemy import Engine
 # from sqlalchemy.orm import Session
@@ -19,6 +19,10 @@ class UserServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_random_user(self, except_: Container[int]) -> User | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def register(self, user: UserIn) -> User:
         raise NotImplementedError
 
@@ -32,6 +36,9 @@ class RAMUserServiceImp(UserServiceImp):
 
     def get_user_by_username(self, username: str) -> User | None:
         return self.db.get_user_by_username(username)
+
+    def get_random_user(self, except_: Container[int]) -> User | None:
+        return self.db.get_random_user(except_)
 
     def register(self, user: UserIn) -> User:
         return self.db.create_user(user)
@@ -71,6 +78,9 @@ class UserService:
 
     def get_user_by_username(self, username: str) -> User | None:
         return self.imp.get_user_by_username(username)
+
+    def get_random_user(self, except_: Container[int]) -> User | None:
+        return self.imp.get_random_user(except_)
 
     def register(self, user: UserIn) -> User:
         if not self.get_user_by_username(user.username):

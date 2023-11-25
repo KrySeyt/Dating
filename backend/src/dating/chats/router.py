@@ -28,6 +28,16 @@ def get_chat(
     return asdict(chat)
 
 
+@chats_router.get("/user/{user_id}", response_model=list[ChatOut])
+def get_user_chats(
+        chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
+        user_id: Annotated[int, Path()],
+) -> list[Dataclass]:
+
+    chats = chat_service.get_user_chats(user_id)
+    return [asdict(chat) for chat in chats]
+
+
 @chats_router.post(
     "/",
     response_model=ChatOut,
@@ -48,6 +58,20 @@ def create_chat(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
 
     return asdict(chat)
+
+
+@chats_router.post(
+    "/start",
+    response_model=ChatOut | None,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_chat_with_matched_user(
+        chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
+        current_user: Annotated[User, Depends(get_current_user)],
+) -> Dataclass | None:
+
+    chat = chat_service.create_chat_with_matched_user(current_user.id)
+    return asdict(chat) if chat else None
 
 
 @chats_router.delete(
