@@ -1,0 +1,34 @@
+name: Dating backend CI
+
+on: push
+
+defaults:
+  run:
+    working-directory: ./backend
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.11
+
+    - name: Install package with dev dependencies
+      run: |
+        pip install .\[dev\]
+
+    - name: Lint with ruff
+      run: |
+        ruff check src
+
+    - name: Check types with mypy
+      run: |
+        mypy src
+
+    - name: Tests
+      run: |
+        pytest -vvv
