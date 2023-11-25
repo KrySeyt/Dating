@@ -6,6 +6,7 @@ from typing import Generator, Callable
 
 from .schema import UserIn, User
 from .crud import RAMUserCrud
+from .exceptions import UserAlreadyExists
 
 
 class UserServiceImp(ABC):
@@ -72,7 +73,9 @@ class UserService:
         return self.imp.get_user_by_username(username)
 
     def register(self, user: UserIn) -> User:
-        return self.imp.register(user)
+        if not self.get_user_by_username(user.username):
+            return self.imp.register(user)
+        raise UserAlreadyExists("Username already occupied")
 
 
 class UserServiceFactory(ABC):

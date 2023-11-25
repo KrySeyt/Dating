@@ -46,7 +46,7 @@ class RAMUserCrud:
         return None
 
     def create_user(self, user_in: schema.UserIn) -> schema.User:
-        user_id = max(user.id for user in USERS_DB) if USERS_DB else 1
+        user_id = max(user.id for user in USERS_DB) + 1 if USERS_DB else 1
         user = schema.User(id=user_id, **asdict(user_in))
         USERS_DB.append(user)
         return user

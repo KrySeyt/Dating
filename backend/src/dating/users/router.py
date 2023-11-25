@@ -8,6 +8,7 @@ from .schema import UserIn, UserOut, User, LoginData
 from .service import UserService
 from .security import SESSION_EXPIRATION_TIME, SessionProvider
 from .dependencies import get_current_user, get_session_id, get_user_in
+from .exceptions import UserAlreadyExists
 from ..dependencies import Stub, Dataclass
 
 
@@ -42,7 +43,11 @@ def register(
         user_in: Annotated[UserIn, Depends(get_user_in)],
 ) -> Dataclass:
 
-    user = user_service.register(user_in)
+    try:
+        user = user_service.register(user_in)
+    except UserAlreadyExists:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already exists")
+
     return asdict(user)
 
 

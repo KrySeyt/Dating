@@ -32,6 +32,7 @@ def get_chat(
     "/",
     response_model=ChatOut,
     status_code=status.HTTP_201_CREATED,
+    tags=["Non-public"],
     description="This endpoint should not be public. Hide it in nginx config. This only for use "
                 "from another internal services"
 )
@@ -48,3 +49,37 @@ def create_chat(
 
     return asdict(chat)
 
+
+@chats_router.delete(
+    "/{chat_id}",
+    response_model=ChatOut,
+    tags=["Non-public"],
+    description="This endpoint should not be public. Hide it in nginx config. This only for use "
+                "from another internal services"
+)
+def delete_chat(
+        chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
+        chat_id: Annotated[int, Path()],
+) -> Dataclass:
+
+    chat = chat_service.delete_chat(chat_id)
+
+    if not chat:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    return asdict(chat)
+
+
+@chats_router.delete("/my/{chat_id}", response_model=ChatOut)
+def delete_my_chat(
+        chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
+        chat_id: Annotated[int, Path()],
+        current_user: Annotated[User, Depends(get_current_user)],
+) -> Dataclass:
+
+    chat = chat_service.delete_chat_for_user(chat_id, current_user.id)
+
+    if not chat:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    return asdict(chat)

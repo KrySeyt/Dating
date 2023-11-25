@@ -19,6 +19,14 @@ class ChatServiceImp(ABC):
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         raise NotImplementedError
 
+    @abstractmethod
+    def delete_chat(self, chat_id: int) -> Chat | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_chat_for_user(self, chat_id: int, user_id: int) -> Chat | None:
+        raise NotImplementedError
+
 
 class RAMChatServiceImp(ChatServiceImp):
     def __init__(self, crud: RAMChatCrud) -> None:
@@ -29,6 +37,12 @@ class RAMChatServiceImp(ChatServiceImp):
 
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         return self.db.create_chat(users_ids)
+
+    def delete_chat(self, chat_id: int) -> Chat | None:
+        return self.db.delete_chat(chat_id)
+
+    def delete_chat_for_user(self, chat_id: int, user_id: int) -> Chat | None:
+        return self.db.delete_chat_for_user(chat_id, user_id)
 
 
 # class RDBMSChatServiceImp(ChatServiceImp):
@@ -51,6 +65,12 @@ class ChatService:
                 raise UserNotFound(f"User with id {user_id} doesn't exists")
 
         return self.imp.create_chat(users_ids)
+
+    def delete_chat(self, chat_id: int) -> Chat | None:
+        return self.imp.delete_chat(chat_id)
+
+    def delete_chat_for_user(self, chat_id: int, user_id: int) -> Chat | None:
+        return self.imp.delete_chat_for_user(chat_id, user_id)
 
 
 class ChatServiceFactory(ABC):
