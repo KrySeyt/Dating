@@ -1,7 +1,7 @@
 from typing import Annotated, Type
 from dataclasses import asdict
 
-from fastapi import Depends, HTTPException, status, Request
+from fastapi import Depends, Body, HTTPException, status, Request
 from passlib.ifc import PasswordHash
 
 from .schema import User, RawUserIn, UserIn
@@ -50,7 +50,7 @@ def get_current_user(
 
 def get_user_in(
         password_hasher: Annotated[Type[PasswordHash], Depends(Stub(PasswordHash))],
-        raw_user: RawUserIn
+        raw_user: Annotated[RawUserIn, Body()]
 ) -> UserIn:
     user_data = asdict(raw_user)
     user_data["hashed_password"] = password_hasher.hash(user_data.pop("password"))

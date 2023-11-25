@@ -59,6 +59,16 @@ class RAMUserCrud:
         USERS_DB.append(user)
         return user
 
+    def update_user(self, user_id: int, user_in: schema.UserIn) -> schema.User | None:
+        user = self.get_user_by_id(user_id)
+
+        if not user:
+            return None
+
+        user.username = user_in.username
+        user.hashed_password = user_in.hashed_password
+        return user
+
 
 class SessionCrud(ABC):
     @abstractmethod

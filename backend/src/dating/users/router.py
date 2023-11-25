@@ -1,7 +1,7 @@
 from dataclasses import asdict
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Path, HTTPException, Response, status
 from passlib.ifc import PasswordHash
 
 from .schema import UserIn, UserOut, User, LoginData
@@ -49,6 +49,42 @@ def register(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already exists")
 
     return asdict(user)
+
+
+@users_router.put(
+    "/{user_id}",
+    response_model=UserOut,
+    tags=["Non-public"],
+    description="This endpoint should not be public. Hide it in nginx config. This only for use "
+                "from another internal services"
+)
+def update_user_by_id(
+        user_service: Annotated[UserService, Depends(Stub(UserService))],
+        user_id: Annotated[int, Path()],
+        user_in: Annotated[UserIn, Depends(get_user_in)],
+) -> Dataclass:
+
+    updated_user = user_service.update_user(user_id, user_in)
+
+    if not updated_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    return asdict(updated_user)
+
+
+@users_router.put("/", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+def update_me(
+        user_service: Annotated[UserService, Depends(Stub(UserService))],
+        current_user: Annotated[User, Depends(get_current_user)],
+        user_in: Annotated[UserIn, Depends(get_user_in)],
+) -> Dataclass:
+
+    updated_user = user_service.update_user(current_user.id, user_in)
+
+    if not updated_user:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return asdict(updated_user)
 
 
 @users_router.post("/login")
