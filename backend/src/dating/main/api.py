@@ -6,8 +6,10 @@ from ..users.router import users_router
 from ..chats.router import chats_router
 from ..users.service import RAMUserServiceFactory, UserService
 from ..chats.service import RAMChatServiceFactory, ChatService
+from ..messages.service import RAMMessageServiceFactory, MessageService
 from ..users.crud import RAMUserCrud, RAMSessionCrud
 from ..chats.crud import RAMChatCrud
+from ..messages.crud import RAMMessageCrud
 from ..users.security import SessionProvider
 
 
@@ -21,6 +23,9 @@ def create_app() -> FastAPI:
 
     chat_service_factory = RAMChatServiceFactory(RAMChatCrud, user_service_factory)
     app.dependency_overrides[ChatService] = chat_service_factory.create_chat_service
+
+    message_service_factory = RAMMessageServiceFactory(RAMMessageCrud, chat_service_factory)
+    app.dependency_overrides[MessageService] = message_service_factory.create_message_service
 
     ram_session_crud = RAMSessionCrud()
     session_provider = SessionProvider(ram_session_crud)

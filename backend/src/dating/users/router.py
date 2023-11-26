@@ -12,7 +12,7 @@ from .exceptions import UserAlreadyExists
 from ..dependencies import Stub, Dataclass
 
 
-users_router = APIRouter(tags=["users"], prefix="/users")
+users_router = APIRouter(tags=["Users"], prefix="/users")
 
 
 @users_router.get("/me", response_model=UserOut)

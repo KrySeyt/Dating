@@ -8,6 +8,7 @@ from .schema import Chat
 from .crud import RAMChatCrud
 from ..users.service import UserService, UserServiceFactory
 from ..users.exceptions import UserNotFound
+from ..messages.schema import Message
 
 
 class ChatServiceImp(ABC):
@@ -89,6 +90,9 @@ class ChatService:
             return None
 
         return self.create_chat((user_id, second_user.id))
+
+    def new_message(self, message: Message) -> None:
+        pass
 
     def delete_chat(self, chat_id: int) -> Chat | None:
         return self.imp.delete_chat(chat_id)
