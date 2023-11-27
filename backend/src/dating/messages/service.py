@@ -13,7 +13,15 @@ class MessageServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_user_messages(self, user_id: int) -> list[Message]:
+        raise NotImplementedError
+
+    @abstractmethod
     def create(self, message_in: MessageIn, owner_id: int) -> Message:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_message(self, message_id: int) -> Message | None:
         raise NotImplementedError
 
 
@@ -24,8 +32,14 @@ class RAMMessageServiceImp(MessageServiceImp):
     def get_by_id(self, chat_id: int) -> Message | None:
         return self.db.get_by_id(chat_id)
 
+    def get_user_messages(self, user_id: int) -> list[Message]:
+        return self.db.get_user_messages(user_id)
+
     def create(self, message_in: MessageIn, owner_id: int) -> Message:
         return self.db.create(message_in, owner_id)
+
+    def delete_message(self, message_id: int) -> Message | None:
+        return self.db.delete(message_id)
 
 
 class MessageService:
@@ -35,6 +49,9 @@ class MessageService:
 
     def get_by_id(self, chat_id: int) -> Message | None:
         return self.imp.get_by_id(chat_id)
+
+    def get_user_messages(self, user_id: int) -> list[Message]:
+        return self.imp.get_user_messages(user_id)
 
     def create(self, message_in: MessageIn, owner_id: int) -> Message:
         chat = self.chat_service.get_by_id(message_in.chat_id)
@@ -46,6 +63,14 @@ class MessageService:
             raise UserNotInChat
 
         return self.imp.create(message_in, owner_id)
+
+    def delete_message(self, message_id: int) -> Message | None:
+        message = self.imp.delete_message(message_id)
+
+        if message:
+            self.chat_service.message_deleted(message)
+
+        return message
 
 
 class MessageServiceFactory(ABC):

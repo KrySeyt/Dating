@@ -79,12 +79,12 @@ class ChatService:
 
     def create_chat_with_matched_user(self, user_id: int) -> Chat | None:
         user_chats = self.get_user_chats(user_id)
-        except_users: set[int] = set()
+        except_users_ids: set[int] = {user_id}
         for chat in user_chats:
             for id_ in chat.users_ids:
-                except_users.add(id_)
+                except_users_ids.add(id_)
 
-        second_user = self.user_service.get_random_user(except_=except_users)
+        second_user = self.user_service.get_random_user(except_=except_users_ids)
 
         if not second_user:
             return None
@@ -92,6 +92,9 @@ class ChatService:
         return self.create_chat((user_id, second_user.id))
 
     def new_message(self, message: Message) -> None:
+        pass
+
+    def message_deleted(self, message: Message) -> None:
         pass
 
     def delete_chat(self, chat_id: int) -> Chat | None:

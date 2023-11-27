@@ -4,6 +4,7 @@ from passlib.hash import argon2
 
 from ..users.router import users_router
 from ..chats.router import chats_router
+from ..messages.router import messages_router
 from ..users.service import RAMUserServiceFactory, UserService
 from ..chats.service import RAMChatServiceFactory, ChatService
 from ..messages.service import RAMMessageServiceFactory, MessageService
@@ -17,6 +18,7 @@ def create_app() -> FastAPI:
     app = FastAPI()
     app.include_router(users_router)
     app.include_router(chats_router)
+    app.include_router(messages_router)
 
     user_service_factory = RAMUserServiceFactory(RAMUserCrud)
     app.dependency_overrides[UserService] = user_service_factory.create_user_service
