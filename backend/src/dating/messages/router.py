@@ -3,8 +3,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status, Path, HTTPException
 
-from ..dependencies import Stub, Dataclass
 from .schema import MessageOut
+from ..dependencies import Stub, Dataclass
 from ..messages.service import MessageService
 
 
@@ -32,6 +32,10 @@ def get_user_messages(
 ) -> list[Dataclass]:
 
     messages = message_service.get_user_messages(user_id)
+
+    if messages is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
     return [asdict(message) for message in messages]
 
 

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generator, Callable
+from typing import Generator, Callable, Iterable
 
 from .schema import Message, MessageIn
 from .crud import RAMMessageCrud
@@ -13,7 +13,11 @@ class MessageServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_user_messages(self, user_id: int) -> list[Message]:
+    def get_messages_by_ids(self, messages_ids: Iterable[int]) -> list[Message]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_user_messages(self, user_id: int) -> list[Message] | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -32,7 +36,10 @@ class RAMMessageServiceImp(MessageServiceImp):
     def get_by_id(self, chat_id: int) -> Message | None:
         return self.db.get_by_id(chat_id)
 
-    def get_user_messages(self, user_id: int) -> list[Message]:
+    def get_messages_by_ids(self, messages_ids: Iterable[int]) -> list[Message]:
+        return self.db.get_messages_by_ids(messages_ids)
+
+    def get_user_messages(self, user_id: int) -> list[Message] | None:
         return self.db.get_user_messages(user_id)
 
     def create(self, message_in: MessageIn, owner_id: int) -> Message:
@@ -50,8 +57,11 @@ class MessageService:
     def get_by_id(self, chat_id: int) -> Message | None:
         return self.imp.get_by_id(chat_id)
 
-    def get_user_messages(self, user_id: int) -> list[Message]:
+    def get_user_messages(self, user_id: int) -> list[Message] | None:
         return self.imp.get_user_messages(user_id)
+
+    def get_messages_by_ids(self, messages_ids: Iterable[int]) -> list[Message]:
+        return self.imp.get_messages_by_ids(messages_ids)
 
     def create(self, message_in: MessageIn, owner_id: int) -> Message:
         chat = self.chat_service.get_by_id(message_in.chat_id)
@@ -62,7 +72,10 @@ class MessageService:
         if owner_id not in chat.users_ids:
             raise UserNotInChat
 
-        return self.imp.create(message_in, owner_id)
+        message = self.imp.create(message_in, owner_id)
+        self.chat_service.add_message_to_chat(message.id, chat.id)
+
+        return message
 
     def delete_message(self, message_id: int) -> Message | None:
         message = self.imp.delete_message(message_id)
