@@ -1,7 +1,7 @@
 from dataclasses import asdict
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status, Body, Path, HTTPException
+from fastapi import APIRouter, Depends, status, Body, Path, Query, HTTPException
 
 from .exceptions import UserNotInChat, ChatDoesntExist
 from .schema import ChatOut
@@ -38,7 +38,29 @@ def get_user_chats(
 ) -> list[Dataclass]:
 
     chats = chat_service.get_user_chats(user_id)
+
+    if chats is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
     return [asdict(chat) for chat in chats]
+
+
+@chats_router.get("/{chat_id}/messages", response_model=list[MessageOut])
+def get_chat_messages(
+        chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
+        message_service: Annotated[MessageService, Depends(Stub(MessageService))],
+        chat_id: Annotated[int, Path()],
+        offset: Annotated[int, Query()] = 0,
+        limit: Annotated[int, Query()] = 100,
+) -> list[Dataclass]:
+
+    messages_ids = chat_service.get_chat_messages_ids(chat_id, offset, limit)
+
+    if messages_ids is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    messages = message_service.get_messages_by_ids(messages_ids)
+    return [asdict(message) for message in messages]
 
 
 @chats_router.post(
@@ -57,8 +79,8 @@ def create_chat(
 
     try:
         chat = chat_service.create_chat(users_ids=(current_user.id, *users_ids))
-    except UserNotFound as err:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+    except UserNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return asdict(chat)
 

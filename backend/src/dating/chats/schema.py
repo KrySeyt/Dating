@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ..schema import BaseSchema
 
@@ -11,6 +11,7 @@ class ChatBase(BaseSchema):
 @dataclass
 class Chat(ChatBase):
     id: int
+    messages_story: list[int] = field(default_factory=list)
 
 
 @dataclass

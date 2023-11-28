@@ -21,10 +21,27 @@ class RAMChatCrud:
                 chats.append(chat)
         return chats
 
+    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int] | None:
+        chat = self.get_by_id(chat_id)
+
+        if not chat:
+            return None
+
+        return chat.messages_story[offset:limit + offset]
+
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         chat_id = max(CHATS_DB, key=lambda x: x.id).id + 1 if CHATS_DB else 1
         chat = Chat(id=chat_id, users_ids=list(users_ids))
         CHATS_DB.append(chat)
+        return chat
+
+    def add_message_to_chat(self, message_id: int, chat_id: int) -> Chat | None:
+        chat = self.get_by_id(chat_id)
+
+        if not chat:
+            return None
+
+        chat.messages_story.insert(0, message_id)
         return chat
 
     def delete_chat(self, chat_id: int) -> Chat | None:

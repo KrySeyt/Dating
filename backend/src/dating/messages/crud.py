@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from typing import Iterable
 
 from .schema import Message, MessageIn
 
@@ -7,12 +8,21 @@ MESSAGES_DB: list[Message] = []
 
 
 class RAMMessageCrud:
-    def get_by_id(self, chat_id: int) -> Message | None:
-        for chat in MESSAGES_DB:
-            if chat.id == chat_id:
-                return chat
+    def get_by_id(self, message_id: int) -> Message | None:
+        for message in MESSAGES_DB:
+            if message.id == message_id:
+                return message
 
         return None
+
+    def get_messages_by_ids(self, messages_ids: Iterable[int]) -> list[Message]:
+        matched_messages: list[Message] = []
+        for message_id in messages_ids:
+            message = self.get_by_id(message_id)
+            if message:
+                matched_messages.append(message)
+
+        return matched_messages
 
     def get_user_messages(self, user_id: int) -> list[Message]:
         user_messages: list[Message] = []
