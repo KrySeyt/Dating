@@ -11,7 +11,13 @@ from ..messages.service import MessageService
 messages_router = APIRouter(tags=["Messages"], prefix="/messages")
 
 
-@messages_router.get("/{message_id}", response_model=MessageOut)
+@messages_router.get(
+    "/{message_id}",
+    response_model=MessageOut,
+    tags=["Non-public"],
+    description="This endpoint should not be public. Hide it in nginx config. This only for use "
+                "from another internal services",
+)
 def get_message(
         message_service: Annotated[MessageService, Depends(Stub(MessageService))],
         message_id: Annotated[int, Path()],
@@ -25,7 +31,13 @@ def get_message(
     return asdict(message)
 
 
-@messages_router.get("/user/{user_id}", response_model=list[MessageOut])
+@messages_router.get(
+    "/user/{user_id}",
+    response_model=list[MessageOut],
+    tags=["Non-public"],
+    description="This endpoint should not be public. Hide it in nginx config. This only for use "
+                "from another internal services",
+)
 def get_user_messages(
         message_service: Annotated[MessageService, Depends(Stub(MessageService))],
         user_id: Annotated[int, Path()],
@@ -44,7 +56,7 @@ def get_user_messages(
     response_model=MessageOut,
     tags=["Non-public"],
     description="This endpoint should not be public. Hide it in nginx config. This only for use "
-                "from another internal services"
+                "from another internal services",
 )
 def delete_message(
         message_service: Annotated[MessageService, Depends(Stub(MessageService))],
