@@ -1,3 +1,3 @@
 # Dating
 
-Наше приложение ориентировано на интересы пользователей, призвано помогать одиноким людям, желающим завести новые знакомства или обсудить интересующую тему с незнакомцем. Мы предлагаем полностью безопасный сервис для поиска единомышленников, с возможностью быстро менять темы разговоров, делая поиск подходящего собеседника приятным и легким.
+Don't know who to chat with, go to a concert with, or play Genshin with? Tired of fruitless searches for interesting people? Try Meetup and forget about endless profile browsing - our AI-based recommendation system will take care of finding like-minded people for you.
