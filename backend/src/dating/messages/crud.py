@@ -1,6 +1,7 @@
 from dataclasses import asdict
 from typing import Iterable
 
+from .exceptions import MessageNotFound
 from .schema import Message, MessageIn
 
 
@@ -21,6 +22,8 @@ class RAMMessageCrud:
             message = self.get_by_id(message_id)
             if message:
                 matched_messages.append(message)
+            else:
+                raise MessageNotFound
 
         return matched_messages
 
@@ -38,10 +41,12 @@ class RAMMessageCrud:
         MESSAGES_DB.append(message)
         return message
 
-    def delete(self, message_id: int) -> Message | None:
+    def delete(self, message_id: int) -> Message:
         message = self.get_by_id(message_id)
 
-        if message:
-            MESSAGES_DB.remove(message)
+        if not message:
+            raise MessageNotFound
+
+        MESSAGES_DB.remove(message)
 
         return message

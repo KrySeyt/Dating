@@ -6,10 +6,8 @@ from typing import Generator, Callable, Iterable
 
 from .schema import Chat
 from .crud import RAMChatCrud
-from .exceptions import ChatDoesntExist
 from ..users.service import UserService, UserServiceFactory
 from ..users.exceptions import UserNotFound
-from ..messages.schema import Message
 
 
 class ChatServiceImp(ABC):
@@ -22,7 +20,7 @@ class ChatServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int] | None:
+    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int]:
         raise NotImplementedError
 
     @abstractmethod
@@ -30,15 +28,19 @@ class ChatServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def add_message_to_chat(self, message_id: int, chat_id: int) -> Chat | None:
+    def add_message_to_chat(self, chat_id: int, message_id: int) -> Chat:
         raise NotImplementedError
 
     @abstractmethod
-    def delete_chat(self, chat_id: int) -> Chat | None:
+    def delete_message_from_chat(self, chat_id: int, message_id: int) -> Chat:
         raise NotImplementedError
 
     @abstractmethod
-    def delete_chat_for_user(self, chat_id: int, user_id: int) -> Chat | None:
+    def delete_chat(self, chat_id: int) -> Chat:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_chat_for_user(self, chat_id: int, user_id: int) -> Chat:
         raise NotImplementedError
 
 
@@ -52,19 +54,22 @@ class RAMChatServiceImp(ChatServiceImp):
     def get_user_chats(self, user_id: int) -> list[Chat]:
         return self.db.get_user_chats(user_id)
 
-    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int] | None:
+    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int]:
         return self.db.get_chat_messages_ids(chat_id, offset, limit)
 
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         return self.db.create_chat(users_ids)
 
-    def add_message_to_chat(self, message_id: int, chat_id: int) -> Chat | None:
-        return self.db.add_message_to_chat(message_id, chat_id)
+    def add_message_to_chat(self, chat_id: int, message_id: int) -> Chat:
+        return self.db.add_message_to_chat(chat_id, message_id)
 
-    def delete_chat(self, chat_id: int) -> Chat | None:
+    def delete_message_from_chat(self, chat_id: int, message_id: int) -> Chat:
+        return self.db.delete_message_from_chat(chat_id, message_id)
+
+    def delete_chat(self, chat_id: int) -> Chat:
         return self.db.delete_chat(chat_id)
 
-    def delete_chat_for_user(self, chat_id: int, user_id: int) -> Chat | None:
+    def delete_chat_for_user(self, chat_id: int, user_id: int) -> Chat:
         return self.db.delete_chat_for_user(chat_id, user_id)
 
 
@@ -83,15 +88,9 @@ class ChatService:
         return self.imp.get_by_id(chat_id)
 
     def get_user_chats(self, user_id: int) -> list[Chat]:
-        if not self.user_service.get_user_by_id(user_id):
-            raise UserNotFound
-
         return self.imp.get_user_chats(user_id)
 
-    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int] | None:
-        chat = self.get_by_id(chat_id)
-        if not chat:
-            raise ChatDoesntExist
+    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int]:
         return self.imp.get_chat_messages_ids(chat_id, offset, limit)
 
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
@@ -101,9 +100,9 @@ class ChatService:
 
         return self.imp.create_chat(users_ids)
 
-    def create_chat_with_matched_user(self, user_id: int) -> Chat | None:
-        user_chats = self.get_user_chats(user_id)
-        except_users_ids: set[int] = {user_id}
+    def create_chat_with_matched_user(self, request_user_id: int) -> Chat | None:
+        user_chats = self.get_user_chats(request_user_id)
+        except_users_ids: set[int] = {request_user_id}
         for chat in user_chats:
             for id_ in chat.users_ids:
                 except_users_ids.add(id_)
@@ -113,21 +112,28 @@ class ChatService:
         if not second_user:
             return None
 
-        return self.create_chat((user_id, second_user.id))
+        return self.create_chat((request_user_id, second_user.id))
 
-    def add_message_to_chat(self, message_id: int, chat_id: int) -> Chat | None:
-        return self.imp.add_message_to_chat(message_id, chat_id)
+    def add_message_to_chat(self, chat_id: int, message_id: int) -> Chat:
+        chat = self.imp.add_message_to_chat(chat_id, message_id)
+        self.new_message(chat_id, message_id)
+        return chat
 
-    def new_message(self, message: Message) -> None:
+    def delete_message_from_chat(self, chat_id: int, message_id: int) -> Chat:
+        chat = self.imp.delete_message_from_chat(chat_id, message_id)
+        self.message_deleted(chat_id, message_id)
+        return chat
+
+    def new_message(self, chat_id: int, message_id: int) -> None:
         pass
 
-    def message_deleted(self, message: Message) -> None:
+    def message_deleted(self, chat_id: int, message_id: int) -> None:
         pass
 
-    def delete_chat(self, chat_id: int) -> Chat | None:
+    def delete_chat(self, chat_id: int) -> Chat:
         return self.imp.delete_chat(chat_id)
 
-    def delete_chat_for_user(self, chat_id: int, user_id: int) -> Chat | None:
+    def delete_chat_for_user(self, chat_id: int, user_id: int) -> Chat:
         return self.imp.delete_chat_for_user(chat_id, user_id)
 
 

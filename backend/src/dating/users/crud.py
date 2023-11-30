@@ -8,7 +8,7 @@ from typing import Container
 
 # from . import models
 from . import schema
-
+from .exceptions import UserNotFound
 
 # class PostgresUserCrud:
 #     def __init__(self, session: Session) -> None:
@@ -59,11 +59,11 @@ class RAMUserCrud:
         USERS_DB.append(user)
         return user
 
-    def update_user(self, user_id: int, user_in: schema.UserIn) -> schema.User | None:
+    def update_user(self, user_id: int, user_in: schema.UserIn) -> schema.User:
         user = self.get_user_by_id(user_id)
 
         if not user:
-            return None
+            raise UserNotFound
 
         user.username = user_in.username
         user.hashed_password = user_in.hashed_password
