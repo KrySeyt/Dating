@@ -17,7 +17,13 @@ from ..messages.service import MessageService
 chats_router = APIRouter(tags=["Chats"], prefix="/chats")
 
 
-@chats_router.get("/{chat_id}", response_model=ChatOut)
+@chats_router.get(
+    "/{chat_id}",
+    response_model=ChatOut,
+    tags=["Non-public"],
+    description="This endpoint should not be public. Hide it in nginx config. This only for use "
+                "from another internal services",
+)
 def get_chat(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
         chat_id: Annotated[int, Path()],
@@ -31,7 +37,13 @@ def get_chat(
     return asdict(chat)
 
 
-@chats_router.get("/user/{user_id}", response_model=list[ChatOut])
+@chats_router.get(
+    "/user/{user_id}",
+    response_model=list[ChatOut],
+    tags=["Non-public"],
+    description="This endpoint should not be public. Hide it in nginx config. This only for use "
+                "from another internal services",
+)
 def get_user_chats(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
         user_id: Annotated[int, Path()],
@@ -45,7 +57,13 @@ def get_user_chats(
     return [asdict(chat) for chat in chats]
 
 
-@chats_router.get("/{chat_id}/messages", response_model=list[MessageOut])
+@chats_router.get(
+    "/{chat_id}/messages",
+    response_model=list[MessageOut],
+    tags=["Non-public"],
+    description="This endpoint should not be public. Hide it in nginx config. This only for use "
+                "from another internal services",
+)
 def get_chat_messages(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
         message_service: Annotated[MessageService, Depends(Stub(MessageService))],
@@ -69,7 +87,7 @@ def get_chat_messages(
     status_code=status.HTTP_201_CREATED,
     tags=["Non-public"],
     description="This endpoint should not be public. Hide it in nginx config. This only for use "
-                "from another internal services"
+                "from another internal services",
 )
 def create_chat(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
@@ -89,6 +107,7 @@ def create_chat(
     "/start",
     response_model=ChatOut | None,
     status_code=status.HTTP_201_CREATED,
+    tags=["Public"],
 )
 def create_chat_with_matched_user(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
@@ -103,6 +122,7 @@ def create_chat_with_matched_user(
     "/send",
     response_model=MessageOut,
     status_code=status.HTTP_201_CREATED,
+    tags=["Public"],
 )
 def send_message_to_chat(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
@@ -127,7 +147,7 @@ def send_message_to_chat(
     response_model=ChatOut,
     tags=["Non-public"],
     description="This endpoint should not be public. Hide it in nginx config. This only for use "
-                "from another internal services"
+                "from another internal services",
 )
 def delete_chat(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
@@ -142,7 +162,11 @@ def delete_chat(
     return asdict(chat)
 
 
-@chats_router.delete("/my/{chat_id}", response_model=ChatOut)
+@chats_router.delete(
+    "/my/{chat_id}",
+    response_model=ChatOut,
+    tags=["Public"],
+)
 def delete_my_chat(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
         chat_id: Annotated[int, Path()],

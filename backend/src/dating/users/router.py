@@ -15,7 +15,11 @@ from ..dependencies import Stub, Dataclass
 users_router = APIRouter(tags=["Users"], prefix="/users")
 
 
-@users_router.get("/me", response_model=UserOut)
+@users_router.get(
+    "/me",
+    response_model=UserOut,
+    tags=["Public"],
+)
 def get_me(
         current_user: Annotated[User, Depends(get_current_user)]
 ) -> Dataclass:
@@ -23,7 +27,13 @@ def get_me(
     return asdict(current_user)
 
 
-@users_router.get("/{user_id}", response_model=UserOut)
+@users_router.get(
+    "/{user_id}",
+    response_model=UserOut,
+    tags=["Non-public"],
+    description="This endpoint should not be public. Hide it in nginx config. This only for use "
+                "from another internal services",
+)
 def get_user(
         user_service: Annotated[UserService, Depends(Stub(UserService))],
         user_id: int
@@ -37,7 +47,12 @@ def get_user(
     return asdict(user)
 
 
-@users_router.post("/", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@users_router.post(
+    "/",
+    response_model=UserOut,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Public"],
+)
 def register(
         user_service: Annotated[UserService, Depends(Stub(UserService))],
         user_in: Annotated[UserIn, Depends(get_user_in)],
@@ -56,7 +71,7 @@ def register(
     response_model=UserOut,
     tags=["Non-public"],
     description="This endpoint should not be public. Hide it in nginx config. This only for use "
-                "from another internal services"
+                "from another internal services",
 )
 def update_user_by_id(
         user_service: Annotated[UserService, Depends(Stub(UserService))],
@@ -72,7 +87,12 @@ def update_user_by_id(
     return asdict(updated_user)
 
 
-@users_router.put("/", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@users_router.put(
+    "/",
+    response_model=UserOut,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Public"],
+)
 def update_me(
         user_service: Annotated[UserService, Depends(Stub(UserService))],
         current_user: Annotated[User, Depends(get_current_user)],
@@ -87,7 +107,10 @@ def update_me(
     return asdict(updated_user)
 
 
-@users_router.post("/login")
+@users_router.post(
+    "/login",
+    tags=["Public"],
+)
 def login(
         user_service: Annotated[UserService, Depends(Stub(UserService))],
         session_provider: Annotated[SessionProvider, Depends(Stub(SessionProvider))],
@@ -110,7 +133,10 @@ def login(
     return "success"
 
 
-@users_router.post("/logout")
+@users_router.post(
+    "/logout",
+    tags=["Public"],
+)
 def logout(
         session_id: Annotated[str, Depends(get_session_id)],
         session_provider: Annotated[SessionProvider, Depends(Stub(SessionProvider))],
