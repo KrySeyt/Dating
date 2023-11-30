@@ -27,7 +27,7 @@ class UserServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def update_user(self, user_id: int, user_in: UserIn) -> User | None:
+    def update_user(self, user_id: int, user_in: UserIn) -> User:
         raise NotImplementedError
 
 
@@ -47,7 +47,7 @@ class RAMUserServiceImp(UserServiceImp):
     def register(self, user: UserIn) -> User:
         return self.db.create_user(user)
 
-    def update_user(self, user_id: int, user_in: UserIn) -> User | None:
+    def update_user(self, user_id: int, user_in: UserIn) -> User:
         return self.db.update_user(user_id, user_in)
 
 
@@ -90,11 +90,12 @@ class UserService:
         return self.imp.get_random_user(except_)
 
     def register(self, user: UserIn) -> User:
-        if not self.get_user_by_username(user.username):
-            return self.imp.register(user)
-        raise UserAlreadyExists("Username already occupied")
+        if self.get_user_by_username(user.username):
+            raise UserAlreadyExists("Username already occupied")
 
-    def update_user(self, user_id: int, user_in: UserIn) -> User | None:
+        return self.imp.register(user)
+
+    def update_user(self, user_id: int, user_in: UserIn) -> User:
         return self.imp.update_user(user_id, user_in)
 
 

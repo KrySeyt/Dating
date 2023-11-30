@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status, Body, Path, Query, HTTPException
 
-from .exceptions import UserNotInChat, ChatDoesntExist
+from .exceptions import UserNotInChat, ChatNotFound
 from .schema import ChatOut
 from .service import ChatService
 from ..dependencies import Stub, Dataclass
@@ -125,7 +125,6 @@ def create_chat_with_matched_user(
     tags=["Public"],
 )
 def send_message_to_chat(
-        chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
         message_service: Annotated[MessageService, Depends(Stub(MessageService))],
         current_user: Annotated[User, Depends(get_current_user)],
         message_in: Annotated[MessageIn, Body()],
@@ -133,12 +132,11 @@ def send_message_to_chat(
 
     try:
         message = message_service.create(message_in, current_user.id)
-    except ChatDoesntExist:
+    except ChatNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat doesn't exist")
     except UserNotInChat:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not in chat")
 
-    chat_service.new_message(message)
     return asdict(message)
 
 

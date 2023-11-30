@@ -4,3 +4,7 @@ class UserNotFound(ValueError):
 
 class UserAlreadyExists(ValueError):
     pass
+
+
+class UserHasNoPermission(ValueError):
+    pass

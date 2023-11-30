@@ -1,6 +1,13 @@
+from ..users.exceptions import UserHasNoPermission
+
+
 class UserNotInChat(ValueError):
     pass
 
 
-class ChatDoesntExist(ValueError):
+class ChatNotFound(ValueError):
+    pass
+
+
+class ChatUnavailableForUser(UserHasNoPermission):
     pass

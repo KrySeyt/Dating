@@ -4,7 +4,7 @@ from typing import Generator, Callable, Iterable
 from .schema import Message, MessageIn
 from .crud import RAMMessageCrud
 from ..chats.service import ChatService, ChatServiceFactory
-from ..chats.exceptions import UserNotInChat, ChatDoesntExist
+from ..chats.exceptions import UserNotInChat, ChatNotFound
 
 
 class MessageServiceImp(ABC):
@@ -17,7 +17,7 @@ class MessageServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_user_messages(self, user_id: int) -> list[Message] | None:
+    def get_user_messages(self, user_id: int) -> list[Message]:
         raise NotImplementedError
 
     @abstractmethod
@@ -25,7 +25,7 @@ class MessageServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def delete_message(self, message_id: int) -> Message | None:
+    def delete_message(self, message_id: int) -> Message:
         raise NotImplementedError
 
 
@@ -39,13 +39,13 @@ class RAMMessageServiceImp(MessageServiceImp):
     def get_messages_by_ids(self, messages_ids: Iterable[int]) -> list[Message]:
         return self.db.get_messages_by_ids(messages_ids)
 
-    def get_user_messages(self, user_id: int) -> list[Message] | None:
+    def get_user_messages(self, user_id: int) -> list[Message]:
         return self.db.get_user_messages(user_id)
 
     def create(self, message_in: MessageIn, owner_id: int) -> Message:
         return self.db.create(message_in, owner_id)
 
-    def delete_message(self, message_id: int) -> Message | None:
+    def delete_message(self, message_id: int) -> Message:
         return self.db.delete(message_id)
 
 
@@ -57,7 +57,7 @@ class MessageService:
     def get_by_id(self, chat_id: int) -> Message | None:
         return self.imp.get_by_id(chat_id)
 
-    def get_user_messages(self, user_id: int) -> list[Message] | None:
+    def get_user_messages(self, user_id: int) -> list[Message]:
         return self.imp.get_user_messages(user_id)
 
     def get_messages_by_ids(self, messages_ids: Iterable[int]) -> list[Message]:
@@ -67,23 +67,18 @@ class MessageService:
         chat = self.chat_service.get_by_id(message_in.chat_id)
 
         if not chat:
-            raise ChatDoesntExist
+            raise ChatNotFound
 
         if owner_id not in chat.users_ids:
             raise UserNotInChat
 
         message = self.imp.create(message_in, owner_id)
-        self.chat_service.add_message_to_chat(message.id, chat.id)
+        self.chat_service.add_message_to_chat(chat.id, message.id)
 
         return message
 
-    def delete_message(self, message_id: int) -> Message | None:
-        message = self.imp.delete_message(message_id)
-
-        if message:
-            self.chat_service.message_deleted(message)
-
-        return message
+    def delete_message(self, message_id: int) -> Message:
+        return self.imp.delete_message(message_id)
 
 
 class MessageServiceFactory(ABC):
