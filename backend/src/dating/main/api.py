@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from passlib.ifc import PasswordHash
 from passlib.hash import argon2
 
@@ -15,10 +15,13 @@ from ..users.security import SessionProvider
 
 
 def create_app() -> FastAPI:
-    app = FastAPI()
-    app.include_router(users_router)
-    app.include_router(chats_router)
-    app.include_router(messages_router)
+    app_router = APIRouter(prefix="/api/v1")
+    app_router.include_router(users_router)
+    app_router.include_router(chats_router)
+    app_router.include_router(messages_router)
+
+    app = FastAPI(version="1")
+    app.include_router(app_router)
 
     user_service_factory = RAMUserServiceFactory(RAMUserCrud)
     app.dependency_overrides[UserService] = user_service_factory.create_user_service
