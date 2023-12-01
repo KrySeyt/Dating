@@ -27,13 +27,13 @@ class RAMMessageCrud:
 
         return matched_messages
 
-    def get_user_messages(self, user_id: int) -> list[Message]:
+    def get_user_messages(self, user_id: int, offset: int, limit: int) -> list[Message]:
         user_messages: list[Message] = []
         for message in MESSAGES_DB:
             if message.owner_id == user_id:
                 user_messages.append(message)
 
-        return user_messages
+        return user_messages[offset:offset + limit]
 
     def create(self, message_in: MessageIn, owner_id: int) -> Message:
         message_id = max(MESSAGES_DB, key=lambda x: x.id).id + 1 if MESSAGES_DB else 1
