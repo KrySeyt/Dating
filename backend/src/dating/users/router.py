@@ -48,7 +48,7 @@ def get_user(
 
 
 @users_router.post(
-    "/",
+    "",
     response_model=UserOut,
     status_code=status.HTTP_201_CREATED,
     tags=["Public"],
@@ -88,7 +88,7 @@ def update_user_by_id(
 
 
 @users_router.put(
-    "/",
+    "",
     response_model=UserOut,
     status_code=status.HTTP_201_CREATED,
     tags=["Public"],

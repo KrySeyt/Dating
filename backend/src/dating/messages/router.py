@@ -1,10 +1,11 @@
 from dataclasses import asdict
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status, Path, Query, HTTPException
+from fastapi import APIRouter, Depends, status, Path, Query, HTTPException, Body
 
 from .exceptions import MessageNotFound
-from .schema import MessageOut
+from .schema import MessageOut, MessageIn
+from ..chats.exceptions import ChatNotFound, ChatUnavailableForUser
 from ..dependencies import Stub, Dataclass
 from ..messages.service import MessageService
 from ..users.dependencies import get_current_user
@@ -141,5 +142,27 @@ def delete_message(
         message = message_service.delete_message(message_id)
     except MessageNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    return asdict(message)
+
+
+@messages_router.post(
+    "",
+    response_model=MessageOut,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Public"],
+)
+def send_message_to_chat(
+        message_service: Annotated[MessageService, Depends(Stub(MessageService))],
+        current_user: Annotated[User, Depends(get_current_user)],
+        message_in: Annotated[MessageIn, Body()],
+) -> Dataclass:
+
+    try:
+        message = message_service.create(message_in, current_user.id)
+    except ChatNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat doesn't exist")
+    except ChatUnavailableForUser:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not in chat")
 
     return asdict(message)

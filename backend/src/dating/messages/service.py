@@ -4,7 +4,7 @@ from typing import Generator, Callable, Iterable
 from .schema import Message, MessageIn
 from .crud import RAMMessageCrud
 from ..chats.service import ChatService, ChatServiceFactory
-from ..chats.exceptions import UserNotInChat, ChatNotFound
+from ..chats.exceptions import ChatUnavailableForUser, ChatNotFound
 from ..users.exceptions import UserNotFound
 from ..users.service import UserService, UserServiceFactory
 
@@ -78,7 +78,7 @@ class MessageService:
             raise ChatNotFound
 
         if owner_id not in chat.users_ids:
-            raise UserNotInChat
+            raise ChatUnavailableForUser
 
         message = self.imp.create(message_in, owner_id)
         self.chat_service.add_message_to_chat(chat.id, message.id)
