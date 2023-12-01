@@ -16,7 +16,11 @@ class ChatServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_user_chats(self, user_id: int) -> list[Chat]:
+    def get_user_chats(self, user_id: int, offset: int, limit: int) -> list[Chat]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_all_user_chats(self, user_id: int) -> list[Chat]:
         raise NotImplementedError
 
     @abstractmethod
@@ -51,8 +55,11 @@ class RAMChatServiceImp(ChatServiceImp):
     def get_by_id(self, chat_id: int) -> Chat | None:
         return self.db.get_by_id(chat_id)
 
-    def get_user_chats(self, user_id: int) -> list[Chat]:
-        return self.db.get_user_chats(user_id)
+    def get_user_chats(self, user_id: int, offset: int, limit: int) -> list[Chat]:
+        return self.db.get_user_chats(user_id, offset, limit)
+
+    def get_all_user_chats(self, user_id: int) -> list[Chat]:
+        return self.db.get_all_user_chats(user_id)
 
     def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int]:
         return self.db.get_chat_messages_ids(chat_id, offset, limit)
@@ -87,8 +94,21 @@ class ChatService:
     def get_by_id(self, chat_id: int) -> Chat | None:
         return self.imp.get_by_id(chat_id)
 
-    def get_user_chats(self, user_id: int) -> list[Chat]:
-        return self.imp.get_user_chats(user_id)
+    def get_user_chats(self, user_id: int, offset: int, limit: int) -> list[Chat]:
+        user = self.user_service.get_user_by_id(user_id)
+
+        if not user:
+            raise UserNotFound
+
+        return self.imp.get_user_chats(user_id, offset, limit)
+
+    def get_all_user_chats(self, user_id: int) -> list[Chat]:
+        user = self.user_service.get_user_by_id(user_id)
+
+        if not user:
+            raise UserNotFound
+
+        return self.imp.get_all_user_chats(user_id)
 
     def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int]:
         return self.imp.get_chat_messages_ids(chat_id, offset, limit)
@@ -101,7 +121,7 @@ class ChatService:
         return self.imp.create_chat(users_ids)
 
     def create_chat_with_matched_user(self, request_user_id: int) -> Chat | None:
-        user_chats = self.get_user_chats(request_user_id)
+        user_chats = self.get_user_chats(request_user_id, 0, 9999999999999999999999999999999999999)
         except_users_ids: set[int] = {request_user_id}
         for chat in user_chats:
             for id_ in chat.users_ids:

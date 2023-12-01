@@ -8,7 +8,7 @@ from .schema import UserIn, UserOut, User, LoginData
 from .service import UserService
 from .security import SESSION_EXPIRATION_TIME, SessionProvider
 from .dependencies import get_current_user, get_session_id, get_user_in
-from .exceptions import UserAlreadyExists
+from .exceptions import UserAlreadyExists, UserNotFound
 from ..dependencies import Stub, Dataclass
 
 
@@ -79,9 +79,9 @@ def update_user_by_id(
         user_in: Annotated[UserIn, Depends(get_user_in)],
 ) -> Dataclass:
 
-    updated_user = user_service.update_user(user_id, user_in)
-
-    if not updated_user:
+    try:
+        updated_user = user_service.update_user(user_id, user_in)
+    except UserNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     return asdict(updated_user)
@@ -99,9 +99,9 @@ def update_me(
         user_in: Annotated[UserIn, Depends(get_user_in)],
 ) -> Dataclass:
 
-    updated_user = user_service.update_user(current_user.id, user_in)
-
-    if not updated_user:
+    try:
+        updated_user = user_service.update_user(current_user.id, user_in)
+    except UserNotFound:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return asdict(updated_user)

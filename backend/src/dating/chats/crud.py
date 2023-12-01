@@ -15,7 +15,14 @@ class RAMChatCrud:
 
         return None
 
-    def get_user_chats(self, user_id: int) -> list[Chat]:
+    def get_user_chats(self, user_id: int, offset: int, limit: int) -> list[Chat]:
+        chats: list[Chat] = []
+        for chat in CHATS_DB:
+            if user_id in chat.users_ids:
+                chats.append(chat)
+        return chats[offset:limit + offset]
+
+    def get_all_user_chats(self, user_id: int) -> list[Chat]:
         chats: list[Chat] = []
         for chat in CHATS_DB:
             if user_id in chat.users_ids:

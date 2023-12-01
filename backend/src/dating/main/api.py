@@ -29,7 +29,7 @@ def create_app() -> FastAPI:
     chat_service_factory = RAMChatServiceFactory(RAMChatCrud, user_service_factory)
     app.dependency_overrides[ChatService] = chat_service_factory.create_chat_service
 
-    message_service_factory = RAMMessageServiceFactory(RAMMessageCrud, chat_service_factory)
+    message_service_factory = RAMMessageServiceFactory(RAMMessageCrud, chat_service_factory, user_service_factory)
     app.dependency_overrides[MessageService] = message_service_factory.create_message_service
 
     ram_session_crud = RAMSessionCrud()
