@@ -2,10 +2,11 @@ from dataclasses import asdict
 from typing import Iterable
 
 from .exceptions import MessageNotFound
-from .schema import Message, MessageIn
+from .schema import Message, MessageIn, MessageHide
 
 
 MESSAGES_DB: list[Message] = []
+MESSAGES_HIDES_DB: list[MessageHide] = []
 
 
 class RAMMessageCrud:
@@ -35,6 +36,14 @@ class RAMMessageCrud:
 
         return user_messages[offset:offset + limit]
 
+    def get_user_messages_hides_for_chat(self, user_id: int, chat_id: int) -> list[MessageHide]:
+        hides: list[MessageHide] = []
+        for hide in MESSAGES_HIDES_DB:
+            if hide.user_id == user_id and hide.chat_id == chat_id:
+                hides.append(hide)
+
+        return hides
+
     def create(self, message_in: MessageIn, owner_id: int) -> Message:
         message_id = max(MESSAGES_DB, key=lambda x: x.id).id + 1 if MESSAGES_DB else 1
         message = Message(id=message_id, owner_id=owner_id, **asdict(message_in))
@@ -50,3 +59,8 @@ class RAMMessageCrud:
         MESSAGES_DB.remove(message)
 
         return message
+
+    def hide_message(self, message_id: int, chat_id: int, user_id: int) -> MessageHide:
+        hide = MessageHide(message_id, chat_id, user_id)
+        MESSAGES_HIDES_DB.append(hide)
+        return hide

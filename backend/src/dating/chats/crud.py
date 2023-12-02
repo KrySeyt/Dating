@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Container
 
 from .exceptions import ChatNotFound, ChatUnavailableForUser
 from .schema import Chat
@@ -29,13 +29,21 @@ class RAMChatCrud:
                 chats.append(chat)
         return chats
 
-    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int]:
+    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int, except_: Container[int]) -> list[int]:
         chat = self.get_by_id(chat_id)
 
         if not chat:
             raise ChatNotFound
 
-        return chat.messages_story[offset:limit + offset]
+        messages_ids: list[int] = []
+        for message_id in chat.messages_story[offset:]:
+            if len(messages_ids):
+                break
+
+            if message_id not in except_:
+                messages_ids.append(message_id)
+
+        return messages_ids
 
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         chat_id = max(CHATS_DB, key=lambda x: x.id).id + 1 if CHATS_DB else 1

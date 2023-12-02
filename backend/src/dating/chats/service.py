@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generator, Callable, Iterable
+from typing import Generator, Callable, Iterable, Container
 
 # from sqlalchemy import Engine
 # from sqlalchemy.orm import Session
@@ -24,7 +24,7 @@ class ChatServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int]:
+    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int, except_: Container[int]) -> list[int]:
         raise NotImplementedError
 
     @abstractmethod
@@ -61,8 +61,8 @@ class RAMChatServiceImp(ChatServiceImp):
     def get_all_user_chats(self, user_id: int) -> list[Chat]:
         return self.db.get_all_user_chats(user_id)
 
-    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int]:
-        return self.db.get_chat_messages_ids(chat_id, offset, limit)
+    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int, except_: Container[int]) -> list[int]:
+        return self.db.get_chat_messages_ids(chat_id, offset, limit, except_)
 
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         return self.db.create_chat(users_ids)
@@ -110,8 +110,16 @@ class ChatService:
 
         return self.imp.get_all_user_chats(user_id)
 
-    def get_chat_messages_ids(self, chat_id: int, offset: int, limit: int) -> list[int]:
-        return self.imp.get_chat_messages_ids(chat_id, offset, limit)
+    def get_chat_messages_ids(
+            self,
+            chat_id: int,
+            offset: int,
+            limit: int,
+            except_: Container[int] | None = None
+    ) -> list[int]:
+
+        except_chat_ids = except_ or {}
+        return self.imp.get_chat_messages_ids(chat_id, offset, limit, except_chat_ids)
 
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         for user_id in users_ids:
@@ -121,7 +129,7 @@ class ChatService:
         return self.imp.create_chat(users_ids)
 
     def create_chat_with_matched_user(self, request_user_id: int) -> Chat | None:
-        user_chats = self.get_user_chats(request_user_id, 0, 9999999999999999999999999999999999999)
+        user_chats = self.get_all_user_chats(request_user_id)
         except_users_ids: set[int] = {request_user_id}
         for chat in user_chats:
             for id_ in chat.users_ids:
@@ -136,18 +144,21 @@ class ChatService:
 
     def add_message_to_chat(self, chat_id: int, message_id: int) -> Chat:
         chat = self.imp.add_message_to_chat(chat_id, message_id)
-        self.new_message(chat_id, message_id)
+        self.new_message_in_chat(chat_id, message_id)
         return chat
 
     def delete_message_from_chat(self, chat_id: int, message_id: int) -> Chat:
         chat = self.imp.delete_message_from_chat(chat_id, message_id)
-        self.message_deleted(chat_id, message_id)
+        self.message_deleted_from_chat(chat_id, message_id)
         return chat
 
-    def new_message(self, chat_id: int, message_id: int) -> None:
+    def new_message_in_chat(self, chat_id: int, message_id: int) -> None:
         pass
 
-    def message_deleted(self, chat_id: int, message_id: int) -> None:
+    def message_deleted_from_chat(self, chat_id: int, message_id: int) -> None:
+        pass
+
+    def message_hided_in_chat(self, chat_id: int, message_id: int, user_id: int) -> None:
         pass
 
     def delete_chat(self, chat_id: int) -> Chat:
