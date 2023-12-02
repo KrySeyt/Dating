@@ -9,7 +9,7 @@ from .service import UserService
 from .security import SESSION_EXPIRATION_TIME, SessionProvider
 from .dependencies import get_current_user, get_session_id, get_user_in
 from .exceptions import UserAlreadyExists, UserNotFound
-from ..dependencies import Stub, Dataclass
+from ..dependencies import Stub, DataclassAsDict
 
 
 users_router = APIRouter(tags=["Users"], prefix="/users")
@@ -22,7 +22,7 @@ users_router = APIRouter(tags=["Users"], prefix="/users")
 )
 def get_me(
         current_user: Annotated[User, Depends(get_current_user)]
-) -> Dataclass:
+) -> DataclassAsDict:
 
     return asdict(current_user)
 
@@ -37,7 +37,7 @@ def get_me(
 def get_user(
         user_service: Annotated[UserService, Depends(Stub(UserService))],
         user_id: int
-) -> Dataclass:
+) -> DataclassAsDict:
 
     user = user_service.get_user_by_id(user_id)
 
@@ -48,7 +48,7 @@ def get_user(
 
 
 @users_router.post(
-    "/",
+    "",
     response_model=UserOut,
     status_code=status.HTTP_201_CREATED,
     tags=["Public"],
@@ -56,7 +56,7 @@ def get_user(
 def register(
         user_service: Annotated[UserService, Depends(Stub(UserService))],
         user_in: Annotated[UserIn, Depends(get_user_in)],
-) -> Dataclass:
+) -> DataclassAsDict:
 
     try:
         user = user_service.register(user_in)
@@ -77,7 +77,7 @@ def update_user_by_id(
         user_service: Annotated[UserService, Depends(Stub(UserService))],
         user_id: Annotated[int, Path()],
         user_in: Annotated[UserIn, Depends(get_user_in)],
-) -> Dataclass:
+) -> DataclassAsDict:
 
     try:
         updated_user = user_service.update_user(user_id, user_in)
@@ -88,7 +88,7 @@ def update_user_by_id(
 
 
 @users_router.put(
-    "/",
+    "",
     response_model=UserOut,
     status_code=status.HTTP_201_CREATED,
     tags=["Public"],
@@ -97,7 +97,7 @@ def update_me(
         user_service: Annotated[UserService, Depends(Stub(UserService))],
         current_user: Annotated[User, Depends(get_current_user)],
         user_in: Annotated[UserIn, Depends(get_user_in)],
-) -> Dataclass:
+) -> DataclassAsDict:
 
     try:
         updated_user = user_service.update_user(current_user.id, user_in)

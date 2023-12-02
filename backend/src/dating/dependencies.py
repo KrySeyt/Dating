@@ -15,5 +15,5 @@ class Stub:
         return hash(self._dependency)
 
 
-Dataclass = dict[str, Any]
+DataclassAsDict = dict[str, Any]
 

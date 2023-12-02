@@ -3,15 +3,15 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status, Body, Path, Query, HTTPException
 
-from .exceptions import UserNotInChat, ChatNotFound
+from .exceptions import ChatNotFound
 from .schema import ChatOut
 from .service import ChatService
-from ..dependencies import Stub, Dataclass
+from ..dependencies import Stub, DataclassAsDict
 from ..messages.exceptions import MessageNotFound
 from ..users.schema import User
 from ..users.dependencies import get_current_user
 from ..users.exceptions import UserNotFound
-from ..messages.schema import MessageOut, MessageIn
+from ..messages.schema import MessageOut
 from ..messages.service import MessageService
 
 
@@ -28,7 +28,7 @@ def get_my_chats(
         current_user: Annotated[User, Depends(get_current_user)],
         offset: Annotated[int, Query()] = 0,
         limit: Annotated[int, Query()] = 100,
-) -> list[Dataclass]:
+) -> list[DataclassAsDict]:
 
     try:
         chats = chat_service.get_user_chats(current_user.id, offset, limit)
@@ -48,7 +48,7 @@ def get_my_chats(
 def get_chat(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
         chat_id: Annotated[int, Path()],
-) -> Dataclass:
+) -> DataclassAsDict:
 
     chat = chat_service.get_by_id(chat_id)
 
@@ -67,7 +67,7 @@ def get_my_chat(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
         current_user: Annotated[User, Depends(get_current_user)],
         chat_id: Annotated[int, Path()],
-) -> Dataclass:
+) -> DataclassAsDict:
 
     chat = chat_service.get_by_id(chat_id)
 
@@ -92,7 +92,7 @@ def get_user_chats(
         user_id: Annotated[int, Path()],
         offset: Annotated[int, Query()] = 0,
         limit: Annotated[int, Query()] = 100,
-) -> list[Dataclass]:
+) -> list[DataclassAsDict]:
 
     try:
         chats = chat_service.get_user_chats(user_id, offset, limit)
@@ -115,7 +115,7 @@ def get_chat_messages(
         chat_id: Annotated[int, Path()],
         offset: Annotated[int, Query()] = 0,
         limit: Annotated[int, Query()] = 100,
-) -> list[Dataclass]:
+) -> list[DataclassAsDict]:
 
     try:
         messages_ids = chat_service.get_chat_messages_ids(chat_id, offset, limit)
@@ -138,7 +138,7 @@ def get_my_chat_messages(
         chat_id: Annotated[int, Path()],
         offset: Annotated[int, Query()] = 0,
         limit: Annotated[int, Query()] = 100,
-) -> list[Dataclass]:
+) -> list[DataclassAsDict]:
 
     chat = chat_service.get_by_id(chat_id)
 
@@ -149,7 +149,9 @@ def get_my_chat_messages(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User has not permission for this chat")
 
     try:
-        messages_ids = chat_service.get_chat_messages_ids(chat_id, offset, limit)
+        user_chat_hided_messages = message_service.get_user_messages_hides_for_chat(current_user.id, chat_id)
+        user_chat_hided_messages_ids = {hide.message_id for hide in user_chat_hided_messages}
+        messages_ids = chat_service.get_chat_messages_ids(chat_id, offset, limit, except_=user_chat_hided_messages_ids)
         messages = message_service.get_messages_by_ids(messages_ids)
     except (ChatNotFound, MessageNotFound):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
@@ -158,7 +160,7 @@ def get_my_chat_messages(
 
 
 @chats_router.post(
-    "/",
+    "",
     response_model=ChatOut,
     status_code=status.HTTP_201_CREATED,
     tags=["Non-public"],
@@ -168,7 +170,7 @@ def get_my_chat_messages(
 def create_chat(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
         users_ids: Annotated[list[int], Body()],
-) -> Dataclass:
+) -> DataclassAsDict:
 
     try:
         chat = chat_service.create_chat(users_ids=users_ids)
@@ -187,32 +189,10 @@ def create_chat(
 def create_chat_with_matched_user(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
         current_user: Annotated[User, Depends(get_current_user)],
-) -> Dataclass | None:
+) -> DataclassAsDict | None:
 
     chat = chat_service.create_chat_with_matched_user(current_user.id)
     return asdict(chat) if chat else None
-
-
-@chats_router.post(
-    "/send",
-    response_model=MessageOut,
-    status_code=status.HTTP_201_CREATED,
-    tags=["Public"],
-)
-def send_message_to_chat(
-        message_service: Annotated[MessageService, Depends(Stub(MessageService))],
-        current_user: Annotated[User, Depends(get_current_user)],
-        message_in: Annotated[MessageIn, Body()],
-) -> Dataclass:
-
-    try:
-        message = message_service.create(message_in, current_user.id)
-    except ChatNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat doesn't exist")
-    except UserNotInChat:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not in chat")
-
-    return asdict(message)
 
 
 @chats_router.delete(
@@ -225,7 +205,7 @@ def send_message_to_chat(
 def delete_chat(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
         chat_id: Annotated[int, Path()],
-) -> Dataclass:
+) -> DataclassAsDict:
 
     try:
         chat = chat_service.delete_chat(chat_id)
@@ -244,7 +224,7 @@ def delete_my_chat(
         chat_service: Annotated[ChatService, Depends(Stub(ChatService))],
         chat_id: Annotated[int, Path()],
         current_user: Annotated[User, Depends(get_current_user)],
-) -> Dataclass:
+) -> DataclassAsDict:
 
     try:
         chat = chat_service.delete_chat_for_user(chat_id, current_user.id)
