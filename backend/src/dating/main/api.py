@@ -2,6 +2,7 @@ from fastapi import FastAPI, APIRouter
 from passlib.ifc import PasswordHash
 from passlib.hash import argon2
 
+from ..notifications.service import RAMNotificationServiceFactory, NotificationService
 from ..users.router import users_router
 from ..chats.router import chats_router
 from ..messages.router import messages_router
@@ -26,7 +27,10 @@ def create_app() -> FastAPI:
     user_service_factory = RAMUserServiceFactory(RAMUserCrud)
     app.dependency_overrides[UserService] = user_service_factory.create_user_service
 
-    chat_service_factory = RAMChatServiceFactory(RAMChatCrud, user_service_factory)
+    notification_service_factory = RAMNotificationServiceFactory(user_service_factory)
+    app.dependency_overrides[NotificationService] = notification_service_factory.create_notification_service
+
+    chat_service_factory = RAMChatServiceFactory(RAMChatCrud, user_service_factory, notification_service_factory)
     app.dependency_overrides[ChatService] = chat_service_factory.create_chat_service
 
     message_service_factory = RAMMessageServiceFactory(RAMMessageCrud, chat_service_factory, user_service_factory)

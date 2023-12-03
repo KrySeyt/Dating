@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Generator, Callable, Iterable, Container
 
-# from sqlalchemy import Engine
-# from sqlalchemy.orm import Session
-
+from .exceptions import ChatNotFound
 from .schema import Chat
 from .crud import RAMChatCrud
+from ..notifications.service import NotificationService, NotificationServiceFactory
 from ..users.service import UserService, UserServiceFactory
 from ..users.exceptions import UserNotFound
 
@@ -87,9 +86,16 @@ class RAMChatServiceImp(ChatServiceImp):
 
 
 class ChatService:
-    def __init__(self, implementation: ChatServiceImp, user_service: UserService) -> None:
+    def __init__(
+            self,
+            implementation: ChatServiceImp,
+            user_service: UserService,
+            notification_service: NotificationService,
+    ) -> None:
+
         self.imp = implementation
         self.user_service = user_service
+        self.notification_service = notification_service
 
     def get_by_id(self, chat_id: int) -> Chat | None:
         return self.imp.get_by_id(chat_id)
@@ -153,7 +159,15 @@ class ChatService:
         return chat
 
     def new_message_in_chat(self, chat_id: int, message_id: int) -> None:
-        pass
+        chat = self.get_by_id(chat_id)
+
+        if chat is None:
+            raise ChatNotFound
+
+        users_ids = chat.users_ids
+
+        for user_id in users_ids:
+            self.notification_service.notify_new_message(user_id, message_id)
 
     def message_deleted_from_chat(self, chat_id: int, message_id: int) -> None:
         pass
@@ -175,15 +189,23 @@ class ChatServiceFactory(ABC):
 
 
 class RAMChatServiceFactory(ChatServiceFactory):
-    def __init__(self, crud_factory: Callable[[], RAMChatCrud], user_service_factory: UserServiceFactory) -> None:
+    def __init__(
+            self,
+            crud_factory: Callable[[], RAMChatCrud],
+            user_service_factory: UserServiceFactory,
+            notification_service_factory: NotificationServiceFactory,
+    ) -> None:
+
         self.crud_factory = crud_factory
         self.user_service_factory = user_service_factory
+        self.notification_service_factory = notification_service_factory
 
     def create_chat_service(self) -> Generator[ChatService, None, None]:
         crud = self.crud_factory()
         imp = RAMChatServiceImp(crud)
-        user_service = self.user_service_factory.create_user_service()
-        yield ChatService(imp, next(user_service))
+        user_service_gen = self.user_service_factory.create_user_service()
+        notification_service_gen = self.notification_service_factory.create_notification_service()
+        yield ChatService(imp, next(user_service_gen), next(notification_service_gen))
 
 
 # class RDBMSUserServiceFactory(UserServiceFactory):

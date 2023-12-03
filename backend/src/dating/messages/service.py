@@ -4,8 +4,8 @@ from typing import Generator, Callable, Iterable
 from .exceptions import MessageNotFound
 from .schema import Message, MessageIn, MessageHide
 from .crud import RAMMessageCrud
-from ..chats.service import ChatService, ChatServiceFactory
 from ..chats.exceptions import ChatUnavailableForUser, ChatNotFound
+from ..chats.service import ChatService, ChatServiceFactory
 from ..users.exceptions import UserNotFound
 from ..users.service import UserService, UserServiceFactory
 
@@ -67,7 +67,13 @@ class RAMMessageServiceImp(MessageServiceImp):
 
 
 class MessageService:
-    def __init__(self, implementation: MessageServiceImp, chat_service: ChatService, user_service: UserService) -> None:
+    def __init__(
+            self,
+            implementation: MessageServiceImp,
+            chat_service: "ChatService",
+            user_service: UserService
+    ) -> None:
+
         self.imp = implementation
         self.chat_service = chat_service
         self.user_service = user_service
@@ -139,7 +145,7 @@ class RAMMessageServiceFactory(MessageServiceFactory):
     def __init__(
             self,
             crud_factory: Callable[[], RAMMessageCrud],
-            chat_service_factory: ChatServiceFactory,
+            chat_service_factory: "ChatServiceFactory",
             user_service_factory: UserServiceFactory,
     ) -> None:
         self.crud_factory = crud_factory

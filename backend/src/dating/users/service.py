@@ -19,6 +19,10 @@ class UserServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_user_websocket_uri(self, user_id: int) -> str | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_random_user(self, except_: Container[int]) -> User | None:
         raise NotImplementedError
 
@@ -40,6 +44,9 @@ class RAMUserServiceImp(UserServiceImp):
 
     def get_user_by_username(self, username: str) -> User | None:
         return self.db.get_user_by_username(username)
+
+    def get_user_websocket_uri(self, user_id: int) -> str | None:
+        return self.db.get_user_websocket_uri(user_id)
 
     def get_random_user(self, except_: Container[int]) -> User | None:
         return self.db.get_random_user(except_)
@@ -85,6 +92,9 @@ class UserService:
 
     def get_user_by_username(self, username: str) -> User | None:
         return self.imp.get_user_by_username(username)
+
+    def get_user_websocket_uri(self, user_id: int) -> str | None:
+        return self.imp.get_user_websocket_uri(user_id)
 
     def get_random_user(self, except_: Container[int]) -> User | None:
         return self.imp.get_random_user(except_)
