@@ -32,7 +32,8 @@ dependencies = [
     "passlib[argon2]",
     "types-passlib",
     "uvicorn",
-    "gunicorn"
+    "gunicorn",
+    "websockets",
 #    "sqlalchemy",
 #    "psycopg2-binary",
 #    "redis",

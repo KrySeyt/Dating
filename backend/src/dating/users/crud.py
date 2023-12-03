@@ -46,6 +46,13 @@ class RAMUserCrud:
                 return user
         return None
 
+    def get_user_websocket_uri(self, user_id: int) -> str | None:
+        for user in USERS_DB:
+            if user.id == user_id:
+                return user.websocket_uri
+
+        raise UserNotFound
+
     def get_random_user(self, except_: Container[int]) -> schema.User | None:
         for user in USERS_DB:
             if user.id not in except_:

@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
 
+from dating.schema import BaseSchema
+
 
 @dataclass
-class MessageBase:
+class MessageBase(BaseSchema):
     chat_id: int
     text: str
 

@@ -2,12 +2,17 @@ from typing import Iterable, Container
 
 from .exceptions import ChatNotFound, ChatUnavailableForUser
 from .schema import Chat
+from ..messages.crud import RAMMessageCrud
 from ..messages.exceptions import MessageNotFound
+from ..messages.schema import Message
 
 CHATS_DB: list[Chat] = []
 
 
 class RAMChatCrud:
+    def __init__(self, message_crud: RAMMessageCrud) -> None:  # Shit code bcs of bad design
+        self.message_crud = message_crud
+
     def get_by_id(self, chat_id: int) -> Chat | None:
         for chat in CHATS_DB:
             if chat.id == chat_id:
@@ -51,16 +56,22 @@ class RAMChatCrud:
         CHATS_DB.append(chat)
         return chat
 
-    def add_message_to_chat(self, chat_id: int, message_id: int) -> Chat:
+    def add_message_to_chat(self, chat_id: int, message_id: int) -> Message:
         chat = self.get_by_id(chat_id)
 
         if not chat:
             raise ChatNotFound
 
         chat.messages_story.insert(0, message_id)
-        return chat
 
-    def delete_message_from_chat(self, chat_id: int, message_id: int) -> Chat:
+        message = self.message_crud.get_by_id(message_id)
+
+        if not message:
+            raise MessageNotFound
+
+        return message
+
+    def delete_message_from_chat(self, chat_id: int, message_id: int) -> Message:
         chat = self.get_by_id(chat_id)
 
         if not chat:
@@ -70,7 +81,13 @@ class RAMChatCrud:
             raise MessageNotFound
 
         chat.messages_story.remove(message_id)
-        return chat
+
+        message = self.message_crud.get_by_id(message_id)
+
+        if not message:
+            raise MessageNotFound
+
+        return message
 
     def delete_chat(self, chat_id: int) -> Chat:
         chat = self.get_by_id(chat_id)
