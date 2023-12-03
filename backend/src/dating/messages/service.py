@@ -110,11 +110,16 @@ class MessageService:
         return message
 
     def delete_message(self, message_id: int) -> Message:
-        message = self.imp.delete_message(message_id)
+        message = self.get_by_id(message_id)
+
+        if not message:
+            raise MessageNotFound
+
         self.chat_service.delete_message_from_chat(message.chat_id, message_id)
+        message = self.imp.delete_message(message_id)
 
         for forwarded_chat_id in message.forwarded_chats:
-            self.chat_service.message_deleted_from_chat(forwarded_chat_id, message_id)
+            self.chat_service.message_deleted_from_chat(forwarded_chat_id, message)
 
         return message
 

@@ -4,6 +4,7 @@ from typing import Generator, Callable, Iterable, Container
 from .exceptions import ChatNotFound
 from .schema import Chat
 from .crud import RAMChatCrud
+from ..messages.schema import Message
 from ..notifications.service import NotificationService, NotificationServiceFactory
 from ..users.service import UserService, UserServiceFactory
 from ..users.exceptions import UserNotFound
@@ -31,11 +32,11 @@ class ChatServiceImp(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def add_message_to_chat(self, chat_id: int, message_id: int) -> Chat:
+    def add_message_to_chat(self, chat_id: int, message_id: int) -> Message:
         raise NotImplementedError
 
     @abstractmethod
-    def delete_message_from_chat(self, chat_id: int, message_id: int) -> Chat:
+    def delete_message_from_chat(self, chat_id: int, message_id: int) -> Message:
         raise NotImplementedError
 
     @abstractmethod
@@ -66,10 +67,10 @@ class RAMChatServiceImp(ChatServiceImp):
     def create_chat(self, users_ids: Iterable[int]) -> Chat:
         return self.db.create_chat(users_ids)
 
-    def add_message_to_chat(self, chat_id: int, message_id: int) -> Chat:
+    def add_message_to_chat(self, chat_id: int, message_id: int) -> Message:
         return self.db.add_message_to_chat(chat_id, message_id)
 
-    def delete_message_from_chat(self, chat_id: int, message_id: int) -> Chat:
+    def delete_message_from_chat(self, chat_id: int, message_id: int) -> Message:
         return self.db.delete_message_from_chat(chat_id, message_id)
 
     def delete_chat(self, chat_id: int) -> Chat:
@@ -148,17 +149,17 @@ class ChatService:
 
         return self.create_chat((request_user_id, second_user.id))
 
-    def add_message_to_chat(self, chat_id: int, message_id: int) -> Chat:
-        chat = self.imp.add_message_to_chat(chat_id, message_id)
-        self.new_message_in_chat(chat_id, message_id)
-        return chat
+    def add_message_to_chat(self, chat_id: int, message_id: int) -> Message:
+        message = self.imp.add_message_to_chat(chat_id, message_id)
+        self.new_message_in_chat(chat_id, message)
+        return message
 
-    def delete_message_from_chat(self, chat_id: int, message_id: int) -> Chat:
-        chat = self.imp.delete_message_from_chat(chat_id, message_id)
-        self.message_deleted_from_chat(chat_id, message_id)
-        return chat
+    def delete_message_from_chat(self, chat_id: int, message_id: int) -> Message:
+        message = self.imp.delete_message_from_chat(chat_id, message_id)
+        self.message_deleted_from_chat(chat_id, message)
+        return message
 
-    def new_message_in_chat(self, chat_id: int, message_id: int) -> None:
+    def new_message_in_chat(self, chat_id: int, message: Message) -> None:
         chat = self.get_by_id(chat_id)
 
         if chat is None:
@@ -167,10 +168,18 @@ class ChatService:
         users_ids = chat.users_ids
 
         for user_id in users_ids:
-            self.notification_service.notify_new_message(user_id, message_id)
+            self.notification_service.notify_new_message(user_id, message)
 
-    def message_deleted_from_chat(self, chat_id: int, message_id: int) -> None:
-        pass
+    def message_deleted_from_chat(self, chat_id: int, message: Message) -> None:
+        chat = self.get_by_id(chat_id)
+
+        if chat is None:
+            raise ChatNotFound
+
+        users_ids = chat.users_ids
+
+        for user_id in users_ids:
+            self.notification_service.notify_message_deleted(user_id, message)
 
     def message_hided_in_chat(self, chat_id: int, message_id: int, user_id: int) -> None:
         pass

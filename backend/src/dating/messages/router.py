@@ -102,7 +102,7 @@ def delete_my_message(
     message = message_service.get_by_id(message_id)
 
     if not message:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found1")
 
     if current_user.id != message.owner_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
@@ -110,7 +110,7 @@ def delete_my_message(
     try:
         message = message_service.delete_message(message_id)
     except MessageNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found2")
 
     return asdict(message)
 

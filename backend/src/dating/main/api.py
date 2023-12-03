@@ -30,7 +30,11 @@ def create_app() -> FastAPI:
     notification_service_factory = RAMNotificationServiceFactory(user_service_factory)
     app.dependency_overrides[NotificationService] = notification_service_factory.create_notification_service
 
-    chat_service_factory = RAMChatServiceFactory(RAMChatCrud, user_service_factory, notification_service_factory)
+    chat_service_factory = RAMChatServiceFactory(
+        lambda: RAMChatCrud(RAMMessageCrud()),
+        user_service_factory,
+        notification_service_factory
+    )
     app.dependency_overrides[ChatService] = chat_service_factory.create_chat_service
 
     message_service_factory = RAMMessageServiceFactory(RAMMessageCrud, chat_service_factory, user_service_factory)

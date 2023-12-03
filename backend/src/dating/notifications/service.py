@@ -7,8 +7,8 @@ from typing import Generator
 from websockets.sync import client
 
 from dating.messages.crud import RAMMessageCrud
-from dating.messages.exceptions import MessageNotFound
-from dating.messages.schema import MessageOut
+from dating.messages.schema import MessageOut, Message
+from dating.notifications.schema import MessageEventOut, MessageEventsType
 from dating.users.service import UserService, UserServiceFactory
 
 
@@ -17,7 +17,11 @@ logger = logging.getLogger(__name__)
 
 class NotificationServiceImp(ABC):
     @abstractmethod
-    def notify_new_message(self, user_id: int, message_id: int) -> None:
+    def notify_new_message(self, user_id: int, message: Message) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def notify_message_deleted(self, user_id: int, message: Message) -> None:
         raise NotImplementedError
 
 
@@ -26,21 +30,29 @@ class WebsocketNotificationServiceImp(NotificationServiceImp):
         self.user_service = user_service
         self.message_crud = message_crud
 
-    def notify_new_message(self, user_id: int, message_id: int) -> None:
+    def notify_new_message(self, user_id: int, message: Message) -> None:
         user_websocket_uri = self.user_service.get_user_websocket_uri(user_id)
 
         if not user_websocket_uri:
             return
 
-        message = self.message_crud.get_by_id(message_id)
+        try:
+            with client.connect(user_websocket_uri) as websocket:
+                message_event = MessageEventOut(type=MessageEventsType.NEW, message=MessageOut.from_object(message))
+                websocket.send(json.dumps(asdict(message_event)))
+        except OSError as err:
+            logger.error(err)
 
-        if message is None:
-            raise MessageNotFound
+    def notify_message_deleted(self, user_id: int, message: Message) -> None:
+        user_websocket_uri = self.user_service.get_user_websocket_uri(user_id)
+
+        if not user_websocket_uri:
+            return
 
         try:
             with client.connect(user_websocket_uri) as websocket:
-                message_out = MessageOut.from_object(message)
-                websocket.send(json.dumps(asdict(message_out)))
+                message_event = MessageEventOut(type=MessageEventsType.DELETED, message=MessageOut.from_object(message))
+                websocket.send(json.dumps(asdict(message_event)))
         except OSError as err:
             logger.error(err)
 
@@ -49,8 +61,11 @@ class NotificationService:
     def __init__(self, implementation: NotificationServiceImp) -> None:
         self.imp = implementation
 
-    def notify_new_message(self, user_id: int, message_id: int) -> None:
-        self.imp.notify_new_message(user_id, message_id)
+    def notify_new_message(self, user_id: int, message: Message) -> None:
+        self.imp.notify_new_message(user_id, message)
+
+    def notify_message_deleted(self, user_id: int, message: Message) -> None:
+        self.imp.notify_message_deleted(user_id, message)
 
 
 class NotificationServiceFactory(ABC):
