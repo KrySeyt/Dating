@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from .common.chat_gateway import ChatGateway
-from .common.interactor import Interactor
-from ..domain.models.chat import Chat
-from ..domain.models.user import UserId
-from ..domain.services.chat import ChatService
+from dating.application.common.chat_gateway import ChatGateway
+from dating.application.common.interactor import Interactor
+from dating.domain.models.chat import Chat
+from dating.domain.models.user import UserId
+from dating.domain.services.chat import ChatService
 
 
 @dataclass
