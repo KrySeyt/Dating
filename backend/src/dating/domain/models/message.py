@@ -7,9 +7,9 @@ from .chat import ChatId
 MessageId = NewType("MessageId", int)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Message:
-    id: MessageId
+    id: MessageId | None
     text: str
     author_id: UserId
     owner_id: UserId

@@ -6,8 +6,8 @@ from .user import UserId
 ChatId = NewType("ChatId", int)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Chat:
-    id: ChatId
+    id: ChatId | None
     title: str
     users_ids: list[UserId]
