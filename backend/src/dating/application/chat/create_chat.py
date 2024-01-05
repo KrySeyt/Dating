@@ -21,7 +21,7 @@ class CreateChat(Interactor[NewChatDTO, Chat]):
     def __call__(self, data: NewChatDTO) -> Chat:
         chat = self._chat_service.create_chat(
             title=data.title,
-            users_ids=NewChatDTO.user_ids,
+            users_ids=data.user_ids,
         )
 
         chat = self._chat_gateway.save_chat(chat)
