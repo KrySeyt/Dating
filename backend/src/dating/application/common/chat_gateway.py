@@ -9,5 +9,9 @@ class ChatGateway(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_chat_by_id(self, id: ChatId) -> Chat:
+    def get_chat_by_id(self, id_: ChatId) -> Chat:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_chat_by_id(self, id_: ChatId) -> Chat:
         raise NotImplementedError
