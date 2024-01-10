@@ -16,9 +16,10 @@ def singleton(dependency: DependencyT) -> Callable[[], DependencyT]:
 
 
 def create_app() -> FastAPI:
-    app = FastAPI()
     chat_ioc = ChatIoC()
     user_ioc = UserIoC()
+
+    app = FastAPI()
 
     app.include_router(chat_router)
     app.include_router(user_router)
