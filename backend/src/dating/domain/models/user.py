@@ -6,6 +6,6 @@ UserId = NewType("UserId", int)
 
 @dataclass(frozen=True)
 class User:
-    id: UserId
+    id: UserId | None
     username: str
     hashed_password: str
