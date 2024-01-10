@@ -26,4 +26,6 @@ class CreateChat(Interactor[NewChatDTO, Chat]):
 
         chat = self._chat_gateway.save_chat(chat)
 
+        assert chat.id is not None
+
         return chat

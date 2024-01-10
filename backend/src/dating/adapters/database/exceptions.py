@@ -4,3 +4,7 @@ class GatewayException(Exception):
 
 class ChatNotFound(GatewayException):
     pass
+
+
+class UserNotFound(GatewayException):
+    pass
