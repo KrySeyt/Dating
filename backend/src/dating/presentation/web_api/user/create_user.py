@@ -11,7 +11,7 @@ from ...interactor_factory.user import UserInteractorFactory
 @user_router.post(r"/")
 def create_user(
         interactor_factory: Annotated[UserInteractorFactory, Depends()],
-        username: Annotated[str, Body()],
+        username: Annotated[str, Body(embed=True)],
         hashed_password: Annotated[str, Depends(get_hashed_password)],
 ) -> CreatedUserDTO:
     with interactor_factory.create_user() as create_user_interactor:

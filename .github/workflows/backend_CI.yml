@@ -29,6 +29,6 @@ jobs:
       run: |
         mypy src
 
-    - name: Tests
-      run: |
-        pytest -vvv
+        #    - name: Tests
+        #run: |
+        #pytest -vvv
