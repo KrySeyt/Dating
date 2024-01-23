@@ -3,6 +3,7 @@ from typing import ContextManager
 
 from dating.application.user.create_user import CreateUser
 from dating.application.user.get_user import GetUser
+from dating.application.user.login import Login
 
 
 class UserInteractorFactory(ABC):
@@ -14,6 +15,6 @@ class UserInteractorFactory(ABC):
     def create_user(self) -> ContextManager[CreateUser]:
         raise NotImplementedError
 
-    # @abstractmethod
-    # def delete_user(self) -> ContextManager[DeleteChat]:
-    #     raise NotImplementedError
+    @abstractmethod
+    def login(self) -> ContextManager[Login]:
+        raise NotImplementedError

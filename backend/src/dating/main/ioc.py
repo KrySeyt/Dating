@@ -1,12 +1,17 @@
 from contextlib import contextmanager
 from typing import Generator
 
+from passlib.handlers.argon2 import argon2
+
+from dating.adapters.database.ram_session_db import RAMSessionGateway
 from dating.adapters.database.ram_user_db import RAMUserGateway
+from dating.adapters.security.argon2_password_provider import HashingPasswordProvider
 from dating.application.chat.create_chat import CreateChat
 from dating.application.chat.delete_chat import DeleteChat
 from dating.application.chat.get_chat import GetChat
 from dating.application.user.create_user import CreateUser
 from dating.application.user.get_user import GetUser
+from dating.application.user.login import Login
 from dating.domain.services.chat import ChatService
 from dating.domain.services.user import UserService
 from dating.presentation.interactor_factory.chat import ChatInteractorFactory
@@ -34,6 +39,8 @@ class ChatIoC(ChatInteractorFactory):
 class UserIoC(UserInteractorFactory):
     def __init__(self) -> None:
         self._user_gateway = RAMUserGateway()
+        self._session_gateway = RAMSessionGateway()
+        self._password_provider = HashingPasswordProvider(argon2)
 
     @contextmanager
     def get_user(self) -> Generator[GetUser, None, None]:
@@ -47,4 +54,13 @@ class UserIoC(UserInteractorFactory):
         yield CreateUser(
             UserService(),
             self._user_gateway
+        )
+
+    @contextmanager
+    def login(self) -> Generator[Login, None, None]:
+        yield Login(
+            UserService(),
+            self._user_gateway,
+            self._session_gateway,
+            self._password_provider,
         )

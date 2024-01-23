@@ -8,3 +8,7 @@ class ChatNotFound(GatewayException):
 
 class UserNotFound(GatewayException):
     pass
+
+
+class SessionNotFound(GatewayException):
+    pass

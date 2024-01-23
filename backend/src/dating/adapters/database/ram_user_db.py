@@ -26,6 +26,13 @@ class RAMUserGateway(UserGateway):
 
         raise UserNotFound(f"User with id {id_} not found")
 
+    def get_user_by_username(self, username: str) -> User:
+        for user in self.RAM_USERS_DB:
+            if user.username == username:
+                return user
+
+        raise UserNotFound(f"User with username {username} not found")
+
     def delete_user_by_id(self, id_: UserId) -> User:
         user = self.get_user_by_id(id_)
         self.RAM_USERS_DB.remove(user)
